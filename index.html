@@ -117,6 +117,7 @@
 		ga('create', 'UA-55400924-3', 'auto');
 		ga('send', 'pageview');
 
+			var mainURL = 'http://benjaminaaron.github.io/';
 
 			$(document).ready(function() {
 
@@ -177,7 +178,7 @@
 			});
 
 			function getDirectLink(){
-				var url = 'https://dl.dropboxusercontent.com/u/1331728/FilterTool_ErasmusMundusJointProgrammes/index.html?';
+				var url = mainURL + '?';
 				for(var i = 0; i < allowedProgrammes.length; i++){
 					url += allowedProgrammes[i] + ',';
 				}
@@ -551,7 +552,7 @@
 			<tr>
 				<td colspan="5" align="center">
 					<span class="optionLinks">
-						<a href="https://dl.dropboxusercontent.com/u/1331728/FilterTool_ErasmusMundusJointProgrammes/index.html">show all</a> | <a onclick="unselectAll()" href="javascript:void(0);">unselect all</a> | <a onclick="getDirectLink()" href="javascript:void(0);">get direct link</a>
+						<a href="http://benjaminaaron.github.io/">show all</a> | <a onclick="unselectAll()" href="javascript:void(0);">unselect all</a> | <a onclick="getDirectLink()" href="javascript:void(0);">get direct link</a>
 					</span>
 				</td>
 			</tr>
