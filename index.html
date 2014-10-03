@@ -120,6 +120,7 @@
 			var mainURL = 'http://benjaminaaron.github.io/';
 
 			$(document).ready(function() {
+				$('#showAllLink').attr('href',mainURL);
 
 				$('#countriesField').tagit({
 					availableTags : countries,
@@ -167,7 +168,7 @@
 					var countriesUrlParams = urlParams.split(';')[2].split(',');
 					if(countriesUrlParams.length > 0){
 						for(var i = 0; i < countriesUrlParams.length; i++){
-							$("#countriesField").tagit("createTag", countriesUrlParams[i]);
+							$("#countriesField").tagit("createTag", countriesUrlParams[i].replace("%20", " "));
 						}
 					}
 					$('#countriesField').tagit({showAutocompleteOnFocus : true});
@@ -552,7 +553,7 @@
 			<tr>
 				<td colspan="5" align="center">
 					<span class="optionLinks">
-						<a href="http://benjaminaaron.github.io/">show all</a> | <a onclick="unselectAll()" href="javascript:void(0);">unselect all</a> | <a onclick="getDirectLink()" href="javascript:void(0);">get direct link</a>
+						<a id="showAllLink" href="#">show all</a> | <a onclick="unselectAll()" href="javascript:void(0);">unselect all</a> | <a onclick="getDirectLink()" href="javascript:void(0);">get direct link</a>
 					</span>
 				</td>
 			</tr>
