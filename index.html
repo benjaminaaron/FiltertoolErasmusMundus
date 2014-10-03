@@ -44,6 +44,7 @@
 			.nameAbbr {
 				font-size: 12px;
 				color: #999900;
+				padding-right: 2px;
 			}
 
 			.siteComment {
@@ -338,9 +339,9 @@
 						var div = document.createElement('div');
 						var boldAbbr = document.createElement('strong');
 						$(boldAbbr).addClass('nameAbbr');
-						boldAbbr.appendChild(document.createTextNode(name.split('-')[0].trim()));
+						boldAbbr.appendChild(document.createTextNode(name.split('_')[0].trim()));
 						div.appendChild(boldAbbr);
-						div.appendChild(document.createTextNode(' ' + name.split('-')[1]));
+						div.appendChild(document.createTextNode('  ' + name.split('_')[1].trim()));
 						td.appendChild(div);
 						tr.appendChild(td);	
 						table.append(tr);
