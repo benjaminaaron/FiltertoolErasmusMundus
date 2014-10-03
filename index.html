@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Filter-tool for the Erasmus Mundus Joint Programmes</title>
+
+		<link href="css/jquery-ui.min.css" type="text/css" rel="stylesheet"/>
+		<link href="css/jquery.tagit.css" type="text/css" rel="stylesheet"/>
+		<link href="css/tagit.ui-zendesk.css" type="text/css" rel="stylesheet"/>
+		
+		<!--<link href="DataTables-1.10.2/media/css/jquery.dataTables.min.css" type="text/css" rel="stylesheet"/>
+		<script type="text/javascript" src="\DataTables-1.10.2\media\js\jquery.js"></script>
+		<script type="text/javascript" src="DataTables-1.10.2/media/js/jquery.dataTables.min.js"></script>-->
+
+		<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="js/tag-it.min.js"></script>
+		
+		<script type="text/javascript" src="data.js"></script>
+
+
+		<style>
+			/* #myTags .ui-menu-item */
+			/*.ui-widget {
+				font-size: 0.8em !important;
+			} */
+
+			*{
+				font-size: 15px;
+				font-family: arial, sans-serif;
+			}
+
+			hr {
+			    border: 0;
+			    height: 0;
+			    border-top: 1px solid rgba(0, 0, 0, 0.2);
+			    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+			}
+
+			#contentTable a, .smallerTextCols {
+				font-size: 13px;
+				color: #777777;
+			}
+
+			.nameAbbr {
+				font-size: 12px;
+				color: #999900;
+			}
+
+			.siteComment {
+				font-size: 13px;
+				color: #888888;
+			}
+
+			#resultsCounter {
+				font-size: 13px;
+				color: #6666FF;
+			}
+
+			.optionLinks, .optionLinks a {
+				font-size: 13px;
+				color: #999999;
+			}
+
+			tbody:before {
+			    line-height: 1em;
+			    content:"-";
+			    color: white;
+			    display: block;
+			}
+
+			#contentTable td {
+				border-bottom: 1px solid #E3E3E3;
+				border-collapse: collapse;
+			}
+
+			td {
+				padding-top: 4px;
+				padding-bottom: 4px;
+				padding-left: 6px;
+			}
+
+			#infoTable {
+				background: #FFFFCC;
+				border: 2px solid;
+    			border-radius: 25px;
+    			border-color: #FFFF66;
+    			color: #000099;
+			}
+			#infoTable td {
+				padding-bottom: 18px;
+				padding-left: 15px;
+				padding-right: 6px;
+				line-height: 140%;
+			}
+			#infoTable a {
+				color: #000099;
+			}
+
+			#biggerFont, #biggerFont a {
+				font-size: 16px;
+			}
+
+			#smallerFont, #smallerFont a {
+				font-size: 12px;
+			}
+
+
+		</style>
+
+		<script>
+
+		/*GOOGLE ANALYTICS*/
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-55400924-3', 'auto');
+		ga('send', 'pageview');
+
+
+			$(document).ready(function() {
+
+				$('#countriesField').tagit({
+					availableTags : countries,
+					placeholderText : 'specify countries here',
+					showAutocompleteOnFocus : true,
+					afterTagAdded : function(event, ui) {	
+					    if(countries.indexOf(ui.tagLabel) == -1){
+					     	$(this).tagit("removeTagByLabel", ui.tagLabel);
+					   	} else {
+					   		updateCountriesFieldText();
+					   		updateTable();
+					   	}
+					},
+					afterTagRemoved : function(event, ui){
+						updateCountriesFieldText();
+						updateTable();
+					}
+				});
+
+				$('input[type="checkbox"]').click(function(){
+					updateTable();
+       			});
+
+       			updateTable();
+
+       			var urlParams = location.search;
+				if(urlParams.length > 3){
+					urlParams = urlParams.substring(1, urlParams.length);
+					unselectAll();
+
+					var programmesUrlParams = urlParams.split(';')[0].split(',');
+					if(programmesUrlParams.length > 0){
+						for(var i = 0; i < programmesUrlParams.length; i++){
+							$('#programme_' + programmesUrlParams[i]).prop('checked', true);
+						}
+					}
+					var categoriesUrlParams = urlParams.split(';')[1].split(',');
+					if(categoriesUrlParams.length > 0){
+						for(var i = 0; i < categoriesUrlParams.length; i++){
+							$('#category_' + categoriesUrlParams[i]).prop('checked', true);
+						}
+					}		
+
+					$('#countriesField').tagit({showAutocompleteOnFocus : false});
+					var countriesUrlParams = urlParams.split(';')[2].split(',');
+					if(countriesUrlParams.length > 0){
+						for(var i = 0; i < countriesUrlParams.length; i++){
+							$("#countriesField").tagit("createTag", countriesUrlParams[i]);
+						}
+					}
+					$('#countriesField').tagit({showAutocompleteOnFocus : true});
+
+					updateTable();
+				};
+
+			});
+
+			function getDirectLink(){
+				var url = 'https://dl.dropboxusercontent.com/u/1331728/FilterTool_ErasmusMundusJointProgrammes/index.html?';
+				for(var i = 0; i < allowedProgrammes.length; i++){
+					url += allowedProgrammes[i] + ',';
+				}
+				if(allowedProgrammes.length > 0){
+					url = url.substring(0, url.length - 1);
+				}
+
+				url += ';';
+				for(var i = 0; i < allowedCategories.length; i++){
+					url += allowedCategories[i] + ',';
+				}
+				if(allowedCategories.length > 0){
+					url = url.substring(0, url.length - 1);
+				}
+
+				url += ';';
+				for(var i = 0; i < allowedCountries.length; i++){
+					url += allowedCountries[i] + ',';
+				}
+				if(allowedCountries.length > 0){
+					url = url.substring(0, url.length - 1);
+				}
+				window.prompt("direct link to these parameters:", url);
+			};
+
+			function unselectAll(){
+				$('input[type="checkbox"]').each(function () {
+					this.checked = false;
+				});
+				
+				$("#countriesField").tagit("removeAll");			
+				updateTable();
+			};
+
+			function updateCountriesFieldText(){
+				var tagCount = $('#countriesField').tagit("assignedTags").length;
+				var text = "";
+				switch(tagCount){
+					case 0:
+						text = 'specify countries here';
+						break;
+					case 1:
+						text = ' < in this country';
+						break;
+					default:
+						text = ' < in these countries';
+				}
+				$('.tagit-new')[0].children[0].placeholder = text;
+			};
+
+/*			function updateTableAnim(){
+				if($("#contentTable").length != 0){
+					console.log('exists');
+					$("#contentTable").hide(function() {
+						updateTableDoIt();
+					});
+				} else {
+					console.log('does not');
+					updateTableDoIt();
+				}
+			}*/
+
+			var allowedProgrammes;
+			var allowedCategories;
+			var allowedCountries;
+			var showPartners;
+
+
+			function updateTable(){
+				/*console.log('updateTable was called');*/
+				allowedProgrammes = new Array();
+				allowedCategories = new Array();
+				allowedCountries = $('#countriesField').tagit("assignedTags");
+				showPartners = false;
+
+				/* DETERMINE STATE OF ALL CHECKBOXES */
+				$('input[type="checkbox"]').each(function () {
+					var id = $(this).attr('id');
+					var idParts = id.split('_');
+					var isChecked = $(this).prop('checked');
+
+					switch(idParts[0]){
+						case 'togglePartners' :
+							showPartners = isChecked;
+							break;
+						case 'programme' :
+							if(isChecked){
+								allowedProgrammes.push(idParts[1]);
+							}
+							break;
+						case 'category' :
+							if(isChecked){
+								allowedCategories.push(idParts[1]);
+							}
+							break;							
+					};
+				});
+
+				/* DELETE OLD TABLE AND CONSTRUCT NEW ONE */
+				$('#contentTableContainer').empty();
+				var table = $('<table>').appendTo($('#contentTableContainer')).attr({
+					'width' : '100%',
+					'id' : 'contentTable'
+				});
+				var thead = $('<thead>').appendTo(table);
+				var th;
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Programme')).appendTo(th); 
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Categories')).appendTo(th); 
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Name')).appendTo(th); 
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Website')).appendTo(th); 
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Info')).appendTo(th); 
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Countries')).appendTo(th); 
+				th = $('<th>').appendTo(thead);
+				$(document.createTextNode('Duration')).appendTo(th); 		
+				if(showPartners){
+					th = $('<th>').appendTo(thead);
+					$(document.createTextNode('Partners')).appendTo(th); 
+				};
+
+				/* FILL THE TABLE WITH MATCHING DATA-ENTRIES */			
+				var tr, td, content;
+				var count = 0;
+				for(var i = 0; i < data.length; i++){
+					var datarow = data[i];	
+
+					if(isMatch(datarow, allowedProgrammes, allowedCategories, allowedCountries)){
+						count ++;
+						tr = document.createElement('tr');	
+
+						/* PROGRAMME */
+						td = document.createElement('td');
+						td.appendChild(document.createTextNode(datarow.programme));
+						tr.appendChild(td);	
+						table.append(tr);
+
+						/*CATEGORIES*/
+						var categoriesStr = '';
+						for(var k = 0; k < datarow.categories.length; k++){
+							categoriesStr += datarow.categories[k] + ", ";
+						};
+						td = document.createElement('td');
+						td.appendChild(document.createTextNode(categoriesStr.substring(0, categoriesStr.length - 2)));
+						tr.appendChild(td);	
+						table.append(tr);
+
+						/*NAME*/
+						td = document.createElement('td');
+						
+						var name = datarow.name;
+						var div = document.createElement('div');
+						var boldAbbr = document.createElement('strong');
+						$(boldAbbr).addClass('nameAbbr');
+						boldAbbr.appendChild(document.createTextNode(name.split('-')[0].trim()));
+						div.appendChild(boldAbbr);
+						div.appendChild(document.createTextNode(' ' + name.split('-')[1]));
+						td.appendChild(div);
+						tr.appendChild(td);	
+						table.append(tr);
+
+						/*WEBSITE*/
+						var website = datarow.website;
+						var addHttp = false;
+						if(website.length > 7){
+							if(website.substring(0,7) == 'http://'){
+								website = website.substring(7, website.length);
+							} else {
+								addHttp = true;
+							}
+						}
+						if(website.length > 4){
+							if(website.substring(0,4) == 'www.'){
+								website = website.substring(4, website.length);
+							}
+						}
+						if(website.charAt(website.length - 1) == '/'){
+							website = website.substring(0, website.length - 1);
+						}
+						td = document.createElement('td');
+						var a = document.createElement('a');
+						var linkText = document.createTextNode(website);
+						a.appendChild(linkText);
+						a.title = website;
+						a.href = addHttp ? 'http://' + datarow.website : datarow.website;
+						document.body.appendChild(a);
+						td.appendChild(a);
+						tr.appendChild(td);	
+						table.append(tr);
+
+						/*INFO*/
+						td = document.createElement('td');
+						var a = document.createElement('a');
+						var linkText = document.createTextNode('pdf');
+						a.appendChild(linkText);
+						a.title = 'pdf';
+						a.href = datarow.pdf;
+						document.body.appendChild(a);
+						td.appendChild(a);
+						tr.appendChild(td);	
+						table.append(tr);
+
+						/*COUNTRIES*/
+						var countriesStr = '';
+						for(var k = 0; k < datarow.countries.length; k++){
+							countriesStr += datarow.countries[k] + ", ";
+						};
+						td = document.createElement('td');
+						td.appendChild(document.createTextNode(countriesStr.substring(0, countriesStr.length - 2)));
+						tr.appendChild(td);	
+						table.append(tr);
+
+						/*DURATION*/
+						td = document.createElement('td');
+						td.appendChild(document.createTextNode(datarow.duration + ' months'));
+						tr.appendChild(td);	
+						table.append(tr);
+
+						if(showPartners){ /*$('#contentTable td:nth-child(8),th:nth-child(8)').hide();*/
+							/*PARTNERS*/
+							td = document.createElement('td');
+							td.appendChild(document.createTextNode(datarow.partners));
+							tr.appendChild(td);	
+							table.append(tr);
+						}
+					}	
+				};
+				if(count == 167){
+					$('#resultsCounter').text('showing all 167 programmes');
+				} else {
+					$('#resultsCounter').html('showing <strong>' + count + '</strong> of 167 programmes');
+				}
+
+				var smallerTextCols = [1, 2, 4, 5, 7];
+				for(var i = 0; i < smallerTextCols.length; i++){
+					$('#contentTable td:nth-child(' + smallerTextCols[i] + '),th:nth-child(' + smallerTextCols[i] + ')').addClass('smallerTextCols');
+				}
+			};
+
+
+			function isMatch(datarow, allowedProgrammes, allowedCategories, allowedCountries){
+				/*TEST PROGRAMMES*/
+				var isMatch = true;
+				isMatch = isMatch && allowedProgrammes.indexOf(datarow.programme) > -1;
+				/*TEST CATEGORIES*/
+				var hasAtLeastOne = false;
+				for(var i = 0; i < datarow.categories.length; i++){
+					if(allowedCategories.indexOf(datarow.categories[i]) > -1){
+						hasAtLeastOne = true;
+					}
+				};
+				isMatch = isMatch && hasAtLeastOne;
+				/*TEST COUNTRIES*/
+				if(allowedCountries.length > 0){
+					var hasThemAll = true;
+					for(var i = 0; i < allowedCountries.length; i++){
+						if(datarow.countries.indexOf(allowedCountries[i]) == -1){
+							hasThemAll = false;
+						}
+					};
+					isMatch = isMatch && hasThemAll;
+				}
+				return isMatch;
+			};
+
+		</script>
+	</head>
+	<body>
+
+		<br>
+		
+		<table id="infoTable" align="center" width="845px">
+			<tr>
+				<td>
+					<img src="logoErasmusMundus.png" alt="Erasmus Mundus Logo" style="width:120px;">
+				</td>
+				<td>
+					<span id="biggerFont">This site shows all 167 <a href="http://eacea.ec.europa.eu/erasmus_mundus/programme/action1_en.php">joint programmes</a></span><span id="smallerFont"> (Action1A: <a href="http://eacea.ec.europa.eu/erasmus_mundus/results_compendia/selected_projects_action_1_master_courses_en.php">Master Courses</a> + Action1B: <a href="http://eacea.ec.europa.eu/erasmus_mundus/results_compendia/selected_projects_action_1_joint_doctorates_en.php">Joint Doctorates</a>)</span><span id="biggerFont"> from the <a href="http://eacea.ec.europa.eu/erasmus_mundus/index_en.php">Erasmus Mundus Programme</a> and lets you filter them by programme, category and country.</span>
+				</td>
+			</tr>
+		</table>
+
+		<br>
+
+		<table align="center">
+			<tr>
+				<td>
+					<input type="checkbox" id="programme_EMMC" checked="checked">
+				</td>
+				<td>
+					<strong>Erasmus Mundus Masters Courses</strong> [EMMCs]
+				</td>
+				<td>
+					&nbsp;&nbsp;&nbsp;
+				</td>
+				<td>
+					<input type="checkbox" id="programme_EMJD" checked="checked">
+				</td>
+				<td>
+					<strong>Erasmus Mundus Joint Doctorates</strong> [EMJDs]
+				</td>
+			</tr>
+			<tr>
+				<td colspan="5">
+					&nbsp;
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" id="category_AGR" checked="checked">
+				</td>
+				<td>
+					Agriculture and Veterinary [AGR]
+				</td>
+				<td>
+					&nbsp;&nbsp;&nbsp;
+				</td>
+				<td>
+					<input type="checkbox" id="category_ENG" checked="checked">
+				</td>
+				<td>
+					Engineering, Manufacture and Construction [ENG]
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" id="category_HEA" checked="checked">
+				</td>
+				<td>
+					Health and Welfare [HEA]
+				</td>
+				<td>
+					&nbsp;&nbsp;&nbsp;
+				</td>
+				<td>
+					<input type="checkbox" id="category_HUM" checked="checked">
+				</td>
+				<td>
+					Humanities and Arts [HUM]
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input type="checkbox" id="category_SCI" checked="checked">
+				</td>
+				<td>
+					Science, Mathematics and Computing [SCI]
+				</td>
+				<td>
+					&nbsp;&nbsp;&nbsp;
+				</td>
+				<td>
+					<input type="checkbox" id="category_SOC" checked="checked">
+				</td>
+				<td>
+					Social Sciences, Business and Law [SOC]
+				</td>
+			</tr>
+			<tr>
+				<td colspan="5"></td>
+			</tr>
+			<tr>
+				<td colspan="5">
+					<ul id="countriesField"></ul>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="5" align="center">
+					<span class="optionLinks">
+						<a href="https://dl.dropboxusercontent.com/u/1331728/FilterTool_ErasmusMundusJointProgrammes/index.html">show all</a> | <a onclick="unselectAll()" href="javascript:void(0);">unselect all</a> | <a onclick="getDirectLink()" href="javascript:void(0);">get direct link</a>
+					</span>
+				</td>
+			</tr>
+			<tr>
+				<td  colspan="5" align="center">
+					<p id="resultsCounter">showing x of x programmes</p>
+				</td>
+			</tr>
+		</table>
+
+		<div align="right">
+			<input type="checkbox" id="togglePartners_"> 
+			show partners
+		</div>
+
+		<hr>
+
+		<br>
+		<div id="contentTableContainer"></div>
+		<br>
+		<br>
+
+		<table align="center" width="845px">
+		<tr>
+			<td class='siteComment' align="center">
+				made by @benjaminaaron | October 3rd, 2014 | Pilsen, Czech Republic
+			</td>
+		</tr>
+		<tr>
+		<tr>
+			<td>
+				&nbsp;
+			</td>
+		</tr>
+		<tr>
+			<td class='siteComment' align="center">
+				A note about the countries. They are naturally an attribute to the institutions that are located there. From these institutions there exist at least three types: those that you have to spend at least one semester during the programme, those that you can choose to spend one or more semesters during your programme and those that you can do a project in during your programme. Every programme has a coordinating institution, which is of the first type. The countries as they appear in the table above are home to institutions of all three types.
+			</td>
+		</tr>
+		<tr>
+			<td class='siteComment' align="center">
+				The data was pulled from eacea.ec.europa.eu between Sept 30 and Oct 2, 2014. There might be small mistakes due to automated parsing in the consolidation-process of the data, please let me know if you find some: benjamin.degenhart@gmail.com
+			</td>
+		</tr>
+		</table>
+
+	</body>
+</html>
