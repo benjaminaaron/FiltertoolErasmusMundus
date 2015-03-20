@@ -1,4 +1,4 @@
-benjaminaaron.github.io
+benjaminaaron.github.io/FiltertoolErasmusMundus
 =======================
 
 A static filter-tool for the 167 Erasmus Mundus Joint Programmes.
